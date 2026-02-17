@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiKey Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 { color: #1E88E5; }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #1E88E5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        .info {
+            background: #E3F2FD;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #C8E6C9;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔑 AiKey Extension Test Page</h1>
+
+    <div class="info">
+        <strong>Purpose:</strong> This page helps you test the AiKey extension functionality without needing to visit actual AI provider websites.
+    </div>
+
+    <div class="test-section">
+        <h2>Test 1: Profile System</h2>
+        <p>Open the AiKey extension popup and verify:</p>
+        <ul>
+            <li>✅ You see a profile chip (should show "Personal" or "Work")</li>
+            <li>✅ The chip has a color (blue for Personal, green for Work)</li>
+            <li>✅ When you add a key, it's assigned to the current profile</li>
+        </ul>
+        <div class="success" id="profile-status" style="display:none;">
+            Profile system is working! ✓
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Add Key Functionality</h2>
+        <p>Test adding a key:</p>
+        <ol>
+            <li>Click the AiKey extension icon</li>
+            <li>Click "Add API Key"</li>
+            <li>Fill in:
+                <ul>
+                    <li>Service: OpenAI</li>
+                    <li>API Key: <code>sk-test-1234567890abcdef</code></li>
+                    <li>Name: Test Key</li>
+                    <li>Tag: Testing</li>
+                </ul>
+            </li>
+            <li>Click "Add Key"</li>
+            <li>Verify the key appears in the list</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Site Adapter System (Simulated)</h2>
+        <p>This page simulates an API key input field:</p>
+
+        <label for="api-key-input">API Key Input (simulated):</label>
+        <input
+            type="password"
+            id="api-key-input"
+            name="api_key"
+            placeholder="sk-..."
+            aria-label="API Key"
+        />
+
+        <p><strong>To test fill functionality:</strong></p>
+        <ol>
+            <li>Add a test key in AiKey (see Test 2)</li>
+            <li>Click the AiKey extension icon</li>
+            <li>Click on your test key</li>
+            <li>The key should be filled into the input above</li>
+        </ol>
+
+        <button onclick="checkInput()">Check if Key was Filled</button>
+        <div id="fill-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Copy Functionality</h2>
+        <p>Test copying a key:</p>
+        <ol>
+            <li>Open AiKey extension</li>
+            <li>Click "Copy" button on any key</li>
+            <li>Paste here:</li>
+        </ol>
+        <input
+            type="text"
+            id="paste-test"
+            placeholder="Paste the copied key here (Cmd/Ctrl+V)"
+        />
+        <button onclick="checkPaste()">Verify Paste</button>
+        <div id="paste-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Search Functionality</h2>
+        <p>Test search:</p>
+        <ol>
+            <li>Add multiple keys with different names/tags</li>
+            <li>Open AiKey extension</li>
+            <li>Type in the search box</li>
+            <li>Verify keys are filtered correctly</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Supported Sites</h2>
+        <p>The site adapter system currently supports:</p>
+        <ul>
+            <li>✅ <strong>platform.openai.com</strong> - OpenAI Platform</li>
+            <li>✅ <strong>console.anthropic.com</strong> - Anthropic Console</li>
+        </ul>
+        <p><em>Note: This test page simulates the input field structure but won't trigger automatic site detection.</em></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Console</h2>
+        <p>Open browser console (F12) to see:</p>
+        <ul>
+            <li>Extension initialization logs</li>
+            <li>Profile creation logs</li>
+            <li>Key operations logs</li>
+            <li>Fill operation logs</li>
+        </ul>
+        <button onclick="testExtensionConnection()">Test Extension Connection</button>
+        <div id="connection-result"></div>
+    </div>
+
+    <script>
+        function checkInput() {
+            const input = document.getElementById('api-key-input');
+            const result = document.getElementById('fill-result');
+
+            if (input.value) {
+                result.innerHTML = `<div class="success">✓ Key detected: ${input.value.substring(0, 10)}...</div>`;
+            } else {
+                result.innerHTML = `<div style="background: #FFCDD2; padding: 10px; border-radius: 4px;">No key filled yet. Try clicking a key in the AiKey extension.</div>`;
+            }
+        }
+
+        function checkPaste() {
+            const input = document.getElementById('paste-test');
+            const result = document.getElementById('paste-result');
+
+            if (input.value && input.value.startsWith('sk-')) {
+                result.innerHTML = `<div class="success">✓ Valid key format detected!</div>`;
+            } else if (input.value) {
+                result.innerHTML = `<div style="background: #FFF9C4; padding: 10px; border-radius: 4px;">Value pasted but doesn't look like an API key.</div>`;
+            } else {
+                result.innerHTML = `<div style="background: #FFCDD2; padding: 10px; border-radius: 4px;">No value pasted yet.</div>`;
+            }
+        }
+
+        function testExtensionConnection() {
+            const result = document.getElementById('connection-result');
+            result.innerHTML = '<div style="padding: 10px;">Testing connection...</div>';
+
+            // Check if extension is installed
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                result.innerHTML = '<div class="success">✓ Chrome extension API available</div>';
+            } else {
+                result.innerHTML = '<div style="background: #FFCDD2; padding: 10px; border-radius: 4px;">Chrome extension API not available</div>';
+            }
+        }
+
+        // Log when page loads
+        console.log('AiKey Test Page loaded');
+        console.log('Input field:', document.getElementById('api-key-input'));
+    </script>
+</body>
+</html>
