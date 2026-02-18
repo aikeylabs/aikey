@@ -21,6 +21,7 @@ G-4: Errors & Loading States
 All async operations (save key, delete key, fill key) show clear UI states:
 While in progress: disabled buttons or visible loading indicator.
 On failure: visible error message; no silent failures.
+
 2. Module A: Local Encrypted Key Vault (Manual Add)
 A-1: Key Data Structure
 
@@ -52,6 +53,7 @@ Full key auto-hides again after a short period (e.g., 3–5 seconds).
 There is a dedicated “Copy” button to copy the full key to clipboard.
 Security copy is visible in settings or a clearly accessible place, e.g.:
 “Your keys are stored locally on this device and encrypted.”
+
 3. Module B: Key List View & Search / Filter
 B-1: List Content
 
@@ -84,6 +86,7 @@ When there are no keys at all:
 Show a clear empty state message, e.g.
 “No keys yet. Add your OpenAI / Anthropic / Azure keys to see everything in one place.”
 Show a clear Add my first key CTA button that opens the Add Key flow.
+
 4. Module C: Basic Profile Capability (Personal / Work)
 C-1: Profile Basics
 
@@ -106,6 +109,7 @@ Switching profile shows a lightweight feedback (e.g., toast):
 “You’re now using Work profile.”
 Add Key view includes helper copy, e.g.:
 “Is this a personal key or a work key?”
+
 5. Module D: Core Sites One-Click Fill (Basic)
 D-1: Supported Sites
 
@@ -140,6 +144,7 @@ D-4: Scope Control
 
 No automatic, silent filling without user click in M1.
 No “Remember this key for this site” or domain → key binding in M1 (that belongs to M2).
+
 6. Module E: Welcome Page & First-Run Experience
 E-1: First-Run Logic
 
@@ -166,6 +171,7 @@ From Add my first key:
 After successfully saving the first key, the user is taken to the list and sees that key.
 From Explore my empty vault:
 User sees the empty list state with empty state copy and a CTA to add a key.
+
 7. Technical: Local Key Usage Footprint (No UI in M1)
 T-1: Logging
 
@@ -179,7 +185,9 @@ T-2: API Wrapper
 
 Provide a clear internal API, e.g. logKeyUsage({ keyId, domain, profile }).
 Future M2/M3 features can reuse this without changing current call sites.
+
 8. M1 Definition of Done
+
 M1 is considered done only if:
 
 All “must-have” items in Modules A–E above are implemented and pass manual testing.

@@ -28,17 +28,19 @@ import {
 } from '@mui/icons-material';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/utils/messaging';
-import type { KeyDisplay, Profile } from '@/types';
+import type { KeyDisplay, Profile, ServiceType } from '@/types';
 import AddKeyDialog from '@/components/AddKeyDialog';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import EnvImportWizard from '@/components/EnvImportWizard';
 import { EditKeyDialog } from './components/EditKeyDialog';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { ProfileManager } from '@/components/ProfileManager';
+import { ServiceFilter } from '@/components/ServiceFilter';
 
 
 export default function Popup() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedService, setSelectedService] = useState<ServiceType | 'All'>('All');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
@@ -272,10 +274,16 @@ export default function Popup() {
   };
 
   const filteredKeys = keys.filter(
-    (key: KeyDisplay) =>
-      key.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      key.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      key.tag?.toLowerCase().includes(searchQuery.toLowerCase())
+    (key: KeyDisplay) => {
+      const matchesSearch =
+        key.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        key.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        key.tag?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesService = selectedService === 'All' || key.service === selectedService;
+
+      return matchesSearch && matchesService;
+    }
   );
 
   if (loading) {
@@ -365,6 +373,11 @@ export default function Popup() {
           sx={{ mb: 2 }}
         />
 
+        <ServiceFilter
+          selectedService={selectedService}
+          onServiceChange={setSelectedService}
+        />
+
         {recommendations.length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -423,9 +436,17 @@ export default function Popup() {
           variant="outlined"
           startIcon={<UploadIcon />}
           onClick={() => setShowImportWizard(true)}
+          sx={{ mb: 1 }}
         >
           Import from .env
         </Button>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: 'block', textAlign: 'center', mt: 1 }}
+        >
+          🔒 Keys are encrypted and stored locally on your device
+        </Typography>
       </Box>
 
       <AddKeyDialog

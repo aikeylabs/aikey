@@ -32,6 +32,8 @@ export default function AddKeyDialog({ open, onClose, currentProfile }: AddKeyDi
   const [name, setName] = useState('');
   const [tag, setTag] = useState('');
   const [error, setError] = useState('');
+  const [apiKeyError, setApiKeyError] = useState('');
+  const [touched, setTouched] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -52,12 +54,39 @@ export default function AddKeyDialog({ open, onClose, currentProfile }: AddKeyDi
     setName('');
     setTag('');
     setError('');
+    setApiKeyError('');
+    setTouched(false);
     onClose();
   };
 
+  const validateApiKey = (value: string): string => {
+    if (!value.trim()) {
+      return 'API key is required';
+    }
+    if (value.trim().length < 20) {
+      return 'API key must be at least 20 characters';
+    }
+    return '';
+  };
+
+  const handleApiKeyChange = (value: string) => {
+    setApiKey(value);
+    if (touched) {
+      setApiKeyError(validateApiKey(value));
+    }
+  };
+
+  const handleApiKeyBlur = () => {
+    setTouched(true);
+    setApiKeyError(validateApiKey(apiKey));
+  };
+
   const handleSubmit = () => {
-    if (!apiKey.trim()) {
-      setError('API key is required');
+    setTouched(true);
+    const validationError = validateApiKey(apiKey);
+
+    if (validationError) {
+      setApiKeyError(validationError);
       return;
     }
 
@@ -105,13 +134,15 @@ export default function AddKeyDialog({ open, onClose, currentProfile }: AddKeyDi
 
           <TextField
             fullWidth
-            label="API Key"
+            label="API Key *"
             type="password"
             value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            onChange={(e) => handleApiKeyChange(e.target.value)}
+            onBlur={handleApiKeyBlur}
             required
+            error={!!apiKeyError}
             sx={{ mb: 2 }}
-            helperText="Your key will be encrypted and stored locally"
+            helperText={apiKeyError || "Your key will be encrypted and stored locally"}
           />
 
           <TextField
@@ -133,6 +164,10 @@ export default function AddKeyDialog({ open, onClose, currentProfile }: AddKeyDi
 
           <Typography variant="caption" color="text.secondary">
             Profile: {currentProfile?.name || 'Personal'}
+          </Typography>
+
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Is this a personal key or a work key?
           </Typography>
 
           <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
