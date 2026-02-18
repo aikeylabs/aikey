@@ -14,6 +14,11 @@ import {
   InputAdornment,
   CircularProgress,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -31,6 +36,7 @@ import { EditKeyDialog } from './components/EditKeyDialog';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { ProfileManager } from '@/components/ProfileManager';
 
+
 export default function Popup() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -38,6 +44,7 @@ export default function Popup() {
   const [showImportWizard, setShowImportWizard] = useState(false);
   const [showProfileManager, setShowProfileManager] = useState(false);
   const [editingKey, setEditingKey] = useState<KeyDisplay | null>(null);
+  const [deleteConfirmKey, setDeleteConfirmKey] = useState<KeyDisplay | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -179,10 +186,19 @@ export default function Popup() {
     copyKeyMutation.mutate(keyId);
   };
 
-  const handleDeleteKey = (keyId: string) => {
-    if (confirm('Are you sure you want to delete this API key?')) {
-      deleteKeyMutation.mutate(keyId);
+  const handleDeleteKey = (key: KeyDisplay) => {
+    setDeleteConfirmKey(key);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmKey) {
+      deleteKeyMutation.mutate(deleteConfirmKey.id);
+      setDeleteConfirmKey(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmKey(null);
   };
 
   const handleEditKey = (key: KeyDisplay) => {
@@ -434,6 +450,24 @@ export default function Popup() {
           onClose={() => setEditingKey(null)}
         />
       )}
+
+      {deleteConfirmKey && (
+        <Dialog open={true} onClose={handleCancelDelete}>
+          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete the API key "{deleteConfirmKey.name}"?
+              This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancelDelete}>Cancel</Button>
+            <Button onClick={handleConfirmDelete} color="error" variant="contained">
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
         </>
       )}
     </Box>
@@ -445,7 +479,7 @@ interface KeyListItemProps {
   onFill: (keyId: string) => void;
   onCopy: (keyId: string) => void;
   onEdit: (key: KeyDisplay) => void;
-  onDelete: (keyId: string) => void;
+  onDelete: (key: KeyDisplay) => void;
   recommended?: boolean;
 }
 
@@ -478,7 +512,7 @@ function KeyListItem({ keyItem, onFill, onCopy, onEdit, onDelete, recommended }:
       <Button size="small" onClick={() => onEdit(keyItem)} sx={{ mr: 1 }}>
         Edit
       </Button>
-      <Button size="small" color="error" onClick={() => onDelete(keyItem.id)} sx={{ mr: 1 }}>
+      <Button size="small" color="error" onClick={() => onDelete(keyItem)} sx={{ mr: 1 }}>
         Delete
       </Button>
     </ListItem>
