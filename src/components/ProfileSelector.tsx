@@ -18,6 +18,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSwitching, setIsSwitching] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,14 +56,46 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   };
 
   const handleSwitchProfile = async (profile: Profile) => {
+    console.log('[ProfileSelector] handleSwitchProfile called with:', profile.name);
+    console.log('[ProfileSelector] currentProfile:', currentProfile?.name);
+    console.log('[ProfileSelector] isSwitching:', isSwitching);
+
+    // Prevent switching if already switching or if clicking the same profile
+    if (isSwitching || (currentProfile && profile.id === currentProfile.id)) {
+      console.log('[ProfileSelector] Blocked - same profile or already switching');
+      setIsOpen(false);
+      return;
+    }
+
+    // Store the previous profile for potential rollback
+    const previousProfile = currentProfile;
+
     try {
-      await sendMessage(MessageType.SWITCH_PROFILE, { profileId: profile.id });
+      // Set switching flag to prevent concurrent switches
+      setIsSwitching(true);
+
+      // Optimistically update UI immediately
       setCurrentProfile(profile);
       setIsOpen(false);
+
+      // Perform the actual profile switch
+      console.log('[ProfileSelector] Calling backend SWITCH_PROFILE');
+      await sendMessage(MessageType.SWITCH_PROFILE, { profileId: profile.id });
+      console.log('[ProfileSelector] Backend switch successful');
+
+      // Show success toast only after successful switch
+      console.log('[ProfileSelector] Setting toast message:', `You're now using ${profile.name} profile.`);
       setToastMessage(`You're now using ${profile.name} profile.`);
       onProfileChange?.(profile);
     } catch (error) {
       console.error('Failed to switch profile:', error);
+      // Rollback to previous profile on error
+      if (previousProfile) {
+        setCurrentProfile(previousProfile);
+      }
+    } finally {
+      // Always clear the switching flag
+      setIsSwitching(false);
     }
   };
 

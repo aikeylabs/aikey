@@ -8,12 +8,19 @@ interface ToastProps {
 }
 
 export const Toast: React.FC<ToastProps> = ({ message, onClose, duration = 2000 }) => {
+  console.log('[Toast] Rendering with message:', message);
+
   useEffect(() => {
+    console.log('[Toast] Setting timer for', duration, 'ms');
     const timer = setTimeout(() => {
+      console.log('[Toast] Timer expired, calling onClose');
       onClose();
     }, duration);
 
-    return () => clearTimeout(timer);
+    return () => {
+      console.log('[Toast] Cleanup - clearing timer');
+      clearTimeout(timer);
+    };
   }, [duration, onClose]);
 
   return (
