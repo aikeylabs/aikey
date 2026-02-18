@@ -584,11 +584,10 @@ export default function Popup() {
 
       {deleteConfirmKey && (
         <Dialog open={true} onClose={handleCancelDelete}>
-          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogTitle>Delete this key?</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete the API key "{deleteConfirmKey.name}"?
-              This action cannot be undone.
+              This action cannot be undone. You will not be able to recover this key from AiKey.
             </DialogContentText>
           </DialogContent>
           <DialogActions>
