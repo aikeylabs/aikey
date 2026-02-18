@@ -23,19 +23,21 @@ All requirements from "M1 Acceptance Checklist (Engineering-Focused).md" Module 
    - Initializes built-in profiles on first run
    - Cannot be deleted via `deleteProfile()` method
 
-2. **Utility Layer** (`src/utils/profileUtils.ts`, line 114-122):
-   - `canDeleteProfile()` function checks `isBuiltIn` flag
-   - Returns `{ canDelete: false, reason: 'Cannot delete built-in profiles' }`
+2. **Utility Layer** (`src/utils/profileUtils.ts`):
+   - `canDeleteProfile()` function checks `isBuiltIn` flag (line 114-122)
+   - `canRenameProfile()` function checks `isBuiltIn` flag (line 127-133)
+   - Returns error messages for built-in profiles
 
-3. **UI Layer** (`src/components/ProfileManager.tsx`, line 248):
-   - Delete button only shown for non-built-in profiles
-   - Built-in profiles cannot be renamed in the UI
+3. **UI Layer** (`src/components/ProfileManager.tsx`):
+   - Edit and Delete buttons only shown for non-built-in profiles (line 248-261)
+   - `startEdit()` validates with `canRenameProfile()` (line 123-137)
+   - Shows error: "Built-in profiles (Personal and Work) cannot be renamed in M1"
 
 ### Verification
 ✅ Personal and Work profiles exist
 ✅ Both marked as `isBuiltIn: true`
 ✅ Cannot be deleted from UI or service layer
-✅ Cannot be renamed in M1
+✅ Cannot be renamed (enforced in UI and validation layer)
 
 ---
 
@@ -161,42 +163,45 @@ All requirements from "M1 Acceptance Checklist (Engineering-Focused).md" Module 
 ### Implementation
 
 #### 1. Toast Notification on Profile Switch
-- **File**: `src/components/ProfileSelector.tsx` (lines 1, 61)
-- Imports `react-hot-toast`
+- **File**: `src/components/ProfileSelector.tsx` (line 60)
+- **File**: `src/components/Toast.tsx` (custom toast component)
 - On successful profile switch:
   ```typescript
-  toast.success(`Switched to ${profile.name}`);
+  setToastMessage(`You're now using ${profile.name} profile.`);
   ```
-- On failure:
-  ```typescript
-  toast.error('Failed to switch profile');
-  ```
+- Toast auto-dismisses after 2 seconds
+- Positioned at bottom center of screen
 
 #### 2. Helper Copy in Add Key Form
-- **File**: `src/components/AddKeyDialog.tsx` (lines 134-147)
+- **File**: `src/components/AddKeyDialog.tsx` (lines 167-179)
 - Profile guidance section:
   ```typescript
-  <Box sx={{ p: 2, bgcolor: 'info.50', borderRadius: 1, border: 1, borderColor: 'info.200' }}>
-    <Typography variant="body2" color="text.primary" sx={{ mb: 0.5 }}>
-      Is this a personal key or a work key?
-    </Typography>
+  <Typography variant="caption" color="text.secondary">
+    Profile: {currentProfile?.name || 'Personal'}
+  </Typography>
+
+  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+    Is this a personal key or a work key?
+  </Typography>
+
+  <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
     <Typography variant="caption" color="text.secondary">
-      This key will be saved to your <strong>{currentProfile?.name || 'Personal'}</strong> profile.
-      You can switch profiles anytime from the main menu.
+      🔒 Your keys are stored locally on this device and encrypted. We never upload
+      your API keys to any server.
     </Typography>
   </Box>
   ```
 - Clearly asks the user to consider profile selection
 - Shows which profile the key will be saved to
-- Explains that profiles can be switched later
+- Includes security reassurance about local storage
 
 ### Verification
 ✅ Toast notification shows on profile switch
-✅ Toast message includes profile name
-✅ Error toast shows on failure
+✅ Toast message: "You're now using [Profile Name] profile."
+✅ Toast auto-dismisses after 2 seconds
 ✅ Helper copy present in Add Key form
 ✅ Helper copy asks "Is this a personal key or a work key?"
-✅ Helper copy explains current profile and switching capability
+✅ Helper copy shows current profile name
 
 ---
 
@@ -259,6 +264,8 @@ All requirements from "M1 Acceptance Checklist (Engineering-Focused).md" Module 
 - `src/components/ProfileSelector.tsx` - Profile switcher dropdown
 - `src/components/ProfileManager.tsx` - Profile management interface
 - `src/components/AddKeyDialog.tsx` - Updated with profile guidance
+- `src/components/Toast.tsx` - Toast notification component
+- `src/components/Toast.css` - Toast styling
 
 ### Integration
 - `src/background/index.ts` - Profile message handlers

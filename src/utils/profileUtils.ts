@@ -122,6 +122,16 @@ export function canDeleteProfile(profile: { isBuiltIn: boolean; id: string }, to
 }
 
 /**
+ * Check if a profile can be renamed
+ */
+export function canRenameProfile(profile: { isBuiltIn: boolean }): { canRename: boolean; reason?: string } {
+  if (profile.isBuiltIn) {
+    return { canRename: false, reason: 'Built-in profiles (Personal and Work) cannot be renamed in M1' };
+  }
+  return { canRename: true };
+}
+
+/**
  * Format profile display name with icon
  */
 export function formatProfileDisplay(name: string, icon: string): string {

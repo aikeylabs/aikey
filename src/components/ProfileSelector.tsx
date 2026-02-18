@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Profile } from '@/types';
 import { MessageType } from '@/types/messages';
 import { sendMessage } from '@/utils/messaging';
+import { Toast } from './Toast';
 import './ProfileSelector.css';
 
 interface ProfileSelectorProps {
@@ -16,6 +17,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,6 +59,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
       await sendMessage(MessageType.SWITCH_PROFILE, { profileId: profile.id });
       setCurrentProfile(profile);
       setIsOpen(false);
+      setToastMessage(`You're now using ${profile.name} profile.`);
       onProfileChange?.(profile);
     } catch (error) {
       console.error('Failed to switch profile:', error);
@@ -73,70 +76,76 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   }
 
   return (
-    <div className="profile-selector" ref={dropdownRef}>
-      <button
-        className="profile-selector-trigger"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div
-          className="profile-icon-small"
-          style={{ backgroundColor: currentProfile.color }}
+    <>
+      <div className="profile-selector" ref={dropdownRef}>
+        <button
+          className="profile-selector-trigger"
+          onClick={() => setIsOpen(!isOpen)}
         >
-          {currentProfile.icon}
-        </div>
-        <span className="profile-name-small">{currentProfile.name}</span>
-        <span className="dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
-      </button>
+          <div
+            className="profile-icon-small"
+            style={{ backgroundColor: currentProfile.color }}
+          >
+            {currentProfile.icon}
+          </div>
+          <span className="profile-name-small">{currentProfile.name}</span>
+          <span className="dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
+        </button>
 
-      {isOpen && (
-        <div className="profile-dropdown">
-          <div className="profile-dropdown-header">Switch Profile</div>
+        {isOpen && (
+          <div className="profile-dropdown">
+            <div className="profile-dropdown-header">Switch Profile</div>
 
-          <div className="profile-list-dropdown">
-            {profiles.map((profile) => (
-              <button
-                key={profile.id}
-                className={`profile-item ${
-                  profile.id === currentProfile.id ? 'active' : ''
-                }`}
-                onClick={() => handleSwitchProfile(profile)}
-              >
-                <div
-                  className="profile-icon-small"
-                  style={{ backgroundColor: profile.color }}
+            <div className="profile-list-dropdown">
+              {profiles.map((profile) => (
+                <button
+                  key={profile.id}
+                  className={`profile-item ${
+                    profile.id === currentProfile.id ? 'active' : ''
+                  }`}
+                  onClick={() => handleSwitchProfile(profile)}
                 >
-                  {profile.icon}
-                </div>
-                <div className="profile-item-info">
-                  <div className="profile-item-name">
-                    {profile.name}
-                    {profile.isDefault && (
-                      <span className="badge-small">Default</span>
+                  <div
+                    className="profile-icon-small"
+                    style={{ backgroundColor: profile.color }}
+                  >
+                    {profile.icon}
+                  </div>
+                  <div className="profile-item-info">
+                    <div className="profile-item-name">
+                      {profile.name}
+                      {profile.isDefault && (
+                        <span className="badge-small">Default</span>
+                      )}
+                    </div>
+                    {profile.metadata?.keyCount !== undefined && (
+                      <div className="profile-item-meta">
+                        {profile.metadata.keyCount} keys
+                      </div>
                     )}
                   </div>
-                  {profile.metadata?.keyCount !== undefined && (
-                    <div className="profile-item-meta">
-                      {profile.metadata.keyCount} keys
-                    </div>
+                  {profile.id === currentProfile.id && (
+                    <span className="check-mark">✓</span>
                   )}
-                </div>
-                {profile.id === currentProfile.id && (
-                  <span className="check-mark">✓</span>
-                )}
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
 
-          <div className="profile-dropdown-footer">
-            <button
-              className="manage-profiles-btn"
-              onClick={handleManageClick}
-            >
-              Manage Profiles
-            </button>
+            <div className="profile-dropdown-footer">
+              <button
+                className="manage-profiles-btn"
+                onClick={handleManageClick}
+              >
+                Manage Profiles
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+      </div>
+
+      {toastMessage && (
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       )}
-    </div>
+    </>
   );
 };

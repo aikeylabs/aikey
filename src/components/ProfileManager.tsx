@@ -6,6 +6,7 @@ import {
   PROFILE_COLORS,
   PROFILE_ICONS,
   canDeleteProfile,
+  canRenameProfile,
 } from '@/utils/profileUtils';
 
 interface ProfileManagerProps {
@@ -121,6 +122,13 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({ onClose }) => {
   };
 
   const startEdit = (profile: Profile) => {
+    // Prevent editing built-in profiles (Personal/Work)
+    const { canRename, reason } = canRenameProfile(profile);
+    if (!canRename) {
+      setError(reason || 'Cannot edit this profile');
+      return;
+    }
+
     setEditingProfile(profile);
     setFormData({
       name: profile.name,
@@ -239,19 +247,21 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({ onClose }) => {
                       Set Default
                     </button>
                   )}
-                  <button
-                    className="btn-secondary"
-                    onClick={() => startEdit(profile)}
-                  >
-                    Edit
-                  </button>
                   {!profile.isBuiltIn && (
-                    <button
-                      className="btn-danger"
-                      onClick={() => handleDeleteProfile(profile)}
-                    >
-                      Delete
-                    </button>
+                    <>
+                      <button
+                        className="btn-secondary"
+                        onClick={() => startEdit(profile)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn-danger"
+                        onClick={() => handleDeleteProfile(profile)}
+                      >
+                        Delete
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
