@@ -118,8 +118,10 @@ export default function AddKeyDialog({ open, onClose, currentProfile }: AddKeyDi
           )}
 
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Service</InputLabel>
+            <InputLabel id="service-select-label">Service</InputLabel>
             <Select
+              labelId="service-select-label"
+              id="service-select"
               value={service}
               label="Service"
               onChange={(e) => setService(e.target.value as ServiceType)}
