@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Avatar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -137,17 +138,6 @@ export default function Popup() {
     }
   }, [currentDomain, profile]);
 
-  // Fill key mutation
-  const fillKeyMutation = useMutation({
-    mutationFn: (keyId: string) => api.fillKey(keyId, currentDomain),
-    onSuccess: () => {
-      // Reload keys
-      if (profile) {
-        api.getKeys(profile.id).then(setKeys).catch(console.error);
-      }
-    },
-  });
-
   // Copy key mutation
   const copyKeyMutation = useMutation({
     mutationFn: async (keyId: string) => {
@@ -179,10 +169,6 @@ export default function Popup() {
       setEditingKey(null);
     },
   });
-
-  const handleFillKey = (keyId: string) => {
-    fillKeyMutation.mutate(keyId);
-  };
 
   const handleCopyKey = (keyId: string) => {
     copyKeyMutation.mutate(keyId);
@@ -278,7 +264,8 @@ export default function Popup() {
       const matchesSearch =
         key.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         key.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        key.tag?.toLowerCase().includes(searchQuery.toLowerCase());
+        key.tag?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        key.keyPrefix.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesService = selectedService === 'All' || key.service === selectedService;
 
@@ -388,7 +375,6 @@ export default function Popup() {
                 <KeyListItem
                   key={key.id}
                   keyItem={key}
-                  onFill={handleFillKey}
                   onCopy={handleCopyKey}
                   onEdit={handleEditKey}
                   onDelete={handleDeleteKey}
@@ -401,9 +387,42 @@ export default function Popup() {
 
         {filteredKeys.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography color="text.secondary">
-              {searchQuery ? 'No keys match your search' : 'No keys yet'}
-            </Typography>
+            {searchQuery || selectedService !== 'All' ? (
+              <>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                  No keys match your search
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedService('All');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              </>
+            ) : keys.length === 0 ? (
+              <>
+                <Typography variant="body1" color="text.primary" sx={{ mb: 1, fontWeight: 500 }}>
+                  No keys yet
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Add your OpenAI, Anthropic, or Azure keys to see everything in one place.
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setShowAddDialog(true)}
+                >
+                  Add my first key
+                </Button>
+              </>
+            ) : (
+              <Typography color="text.secondary">
+                No keys in this profile
+              </Typography>
+            )}
           </Box>
         ) : (
           <List>
@@ -411,7 +430,6 @@ export default function Popup() {
               <KeyListItem
                 key={key.id}
                 keyItem={key}
-                onFill={handleFillKey}
                 onCopy={handleCopyKey}
                 onEdit={handleEditKey}
                 onDelete={handleDeleteKey}
@@ -495,16 +513,42 @@ export default function Popup() {
   );
 }
 
+// Helper function to get service logo/icon
+function getServiceIcon(service: ServiceType): string {
+  const icons: Record<ServiceType, string> = {
+    'OpenAI': '🤖',
+    'Anthropic': '🧠',
+    'Azure OpenAI': '☁️',
+    'Groq': '⚡',
+    'Custom': '🔧',
+  };
+  return icons[service] || '🔑';
+}
+
+// Helper function to format relative time
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  if (minutes > 0) return `${minutes}m ago`;
+  return 'Just now';
+}
+
 interface KeyListItemProps {
   keyItem: KeyDisplay;
-  onFill: (keyId: string) => void;
   onCopy: (keyId: string) => void;
   onEdit: (key: KeyDisplay) => void;
   onDelete: (key: KeyDisplay) => void;
   recommended?: boolean;
 }
 
-function KeyListItem({ keyItem, onFill, onCopy, onEdit, onDelete, recommended }: KeyListItemProps) {
+function KeyListItem({ keyItem, onCopy, onEdit, onDelete, recommended }: KeyListItemProps) {
   return (
     <ListItem
       disablePadding
@@ -516,24 +560,69 @@ function KeyListItem({ keyItem, onFill, onCopy, onEdit, onDelete, recommended }:
         bgcolor: recommended ? 'primary.50' : 'background.paper',
       }}
     >
-      <ListItemButton onClick={() => onFill(keyItem.id)}>
+      <ListItemButton
+        onClick={() => onEdit(keyItem)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          cursor: 'pointer',
+          '&:hover': {
+            bgcolor: 'action.hover',
+          },
+        }}
+      >
+        <Avatar
+          sx={{
+            width: 32,
+            height: 32,
+            bgcolor: 'background.default',
+            fontSize: '1.2rem',
+          }}
+        >
+          {getServiceIcon(keyItem.service)}
+        </Avatar>
         <ListItemText
           primary={keyItem.name}
           secondary={
             <>
               {keyItem.service} • {keyItem.keyPrefix}
               {keyItem.tag && ` • ${keyItem.tag}`}
+              {keyItem.updatedAt && ` • ${formatRelativeTime(keyItem.updatedAt)}`}
             </>
           }
+          sx={{ flexGrow: 1, minWidth: 0 }}
         />
       </ListItemButton>
-      <Button size="small" onClick={() => onCopy(keyItem.id)} sx={{ mr: 1 }}>
+      <Button
+        size="small"
+        onClick={(e) => {
+          e.stopPropagation();
+          onCopy(keyItem.id);
+        }}
+        sx={{ mr: 1 }}
+      >
         Copy
       </Button>
-      <Button size="small" onClick={() => onEdit(keyItem)} sx={{ mr: 1 }}>
+      <Button
+        size="small"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(keyItem);
+        }}
+        sx={{ mr: 1 }}
+      >
         Edit
       </Button>
-      <Button size="small" color="error" onClick={() => onDelete(keyItem)} sx={{ mr: 1 }}>
+      <Button
+        size="small"
+        color="error"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(keyItem);
+        }}
+        sx={{ mr: 1 }}
+      >
         Delete
       </Button>
     </ListItem>
