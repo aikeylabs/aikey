@@ -10,7 +10,8 @@
   ],
   "host_permissions": [
     "https://platform.openai.com/*",
-    "https://console.anthropic.com/*"
+    "https://console.anthropic.com/*",
+    "https://www.perplexity.ai/*"
   ],
   "background": {
     "service_worker": "src/background/index.ts",
@@ -33,7 +34,8 @@
     {
       "matches": [
         "https://platform.openai.com/*",
-        "https://console.anthropic.com/*"
+        "https://console.anthropic.com/*",
+        "https://www.perplexity.ai/*"
       ],
       "js": ["src/content/index.ts"]
     }

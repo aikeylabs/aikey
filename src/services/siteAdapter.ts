@@ -42,6 +42,19 @@ export const SITE_ADAPTERS: SiteAdapter[] = [
       ],
     },
   },
+  {
+    domain: 'www.perplexity.ai',
+    displayName: 'Perplexity AI',
+    service: 'Custom',
+    selectors: {
+      apiKeyInput: [
+        'input[name="apiKey"]',
+        'input[placeholder*="API"]',
+        'input[type="password"]',
+        'input[type="text"][placeholder*="key"]',
+      ],
+    },
+  },
 ];
 
 export class SiteAdapterManager {

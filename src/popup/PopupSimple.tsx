@@ -37,6 +37,7 @@ import { EditKeyDialog } from './components/EditKeyDialog';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { ProfileManager } from '@/components/ProfileManager';
 import { ServiceFilter } from '@/components/ServiceFilter';
+import { siteAdapterManager } from '@/services/siteAdapter';
 
 
 export default function Popup() {
@@ -54,6 +55,9 @@ export default function Popup() {
   const [keys, setKeys] = useState<KeyDisplay[]>([]);
   const [recommendations, setRecommendations] = useState<KeyDisplay[]>([]);
   const [currentDomain, setCurrentDomain] = useState<string>('');
+  const [currentSiteService, setCurrentSiteService] = useState<ServiceType | null>(null);
+  const [fillSuccess, setFillSuccess] = useState<string | null>(null);
+  const [fillError, setFillError] = useState<string | null>(null);
 
   // Initialize and load data
   useEffect(() => {
@@ -124,7 +128,14 @@ export default function Popup() {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]?.url) {
         const url = new URL(tabs[0].url);
-        setCurrentDomain(url.hostname);
+        const domain = url.hostname;
+        setCurrentDomain(domain);
+
+        // Detect if we're on a supported site
+        const adapter = siteAdapterManager.findAdapter(domain);
+        if (adapter) {
+          setCurrentSiteService(adapter.service);
+        }
       }
     });
   }, []);
@@ -197,6 +208,43 @@ export default function Popup() {
     updateKeyMutation.mutate(updatedKey);
   };
 
+  const handleFillKey = async (keyId: string, _keyName: string, service: ServiceType) => {
+    if (!currentDomain) {
+      setFillError('Could not detect current page');
+      return;
+    }
+
+    // Check if we're on a supported site
+    const adapter = siteAdapterManager.findAdapter(currentDomain);
+    if (!adapter) {
+      setFillError('This site is not supported for auto-fill. Use Copy instead.');
+      return;
+    }
+
+    try {
+      setFillSuccess(null);
+      setFillError(null);
+
+      await api.fillKey(keyId, currentDomain);
+
+      // Show success message
+      setFillSuccess(`Filled your ${service} key from ${profile?.name} profile.`);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setFillSuccess(null), 3000);
+    } catch (error: any) {
+      console.error('Fill error:', error);
+      if (error.message.includes('Could not find')) {
+        setFillError(`Couldn't find a key field on this page. Make sure you're on the API key settings page.`);
+      } else {
+        setFillError(error.message || 'Failed to fill key');
+      }
+
+      // Clear error after 5 seconds
+      setTimeout(() => setFillError(null), 5000);
+    }
+  };
+
   const handleKeyAdded = () => {
     // Reload keys after adding
     if (profile) {
@@ -259,6 +307,7 @@ export default function Popup() {
     }
   };
 
+  // Filter keys based on search, service filter, and current site
   const filteredKeys = keys.filter(
     (key: KeyDisplay) => {
       const matchesSearch =
@@ -269,9 +318,16 @@ export default function Popup() {
 
       const matchesService = selectedService === 'All' || key.service === selectedService;
 
-      return matchesSearch && matchesService;
+      // On supported sites, auto-filter by site's service unless user explicitly selected a different service
+      const matchesSiteService = !currentSiteService || selectedService !== 'All' || key.service === currentSiteService;
+
+      return matchesSearch && matchesService && matchesSiteService;
     }
   );
+
+  // Check if we're on a supported site with no matching keys
+  const onSupportedSite = currentSiteService !== null;
+  const noKeysForSite = onSupportedSite && keys.length > 0 && filteredKeys.length === 0 && selectedService === 'All' && !searchQuery;
 
   if (loading) {
     return (
@@ -365,6 +421,24 @@ export default function Popup() {
           onServiceChange={setSelectedService}
         />
 
+        {fillSuccess && (
+          <Alert severity="success" sx={{ mb: 2 }} onClose={() => setFillSuccess(null)}>
+            {fillSuccess}
+          </Alert>
+        )}
+
+        {fillError && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFillError(null)}>
+            {fillError}
+          </Alert>
+        )}
+
+        {onSupportedSite && currentSiteService && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Showing {currentSiteService} keys for this site
+          </Alert>
+        )}
+
         {recommendations.length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -378,6 +452,7 @@ export default function Popup() {
                   onCopy={handleCopyKey}
                   onEdit={handleEditKey}
                   onDelete={handleDeleteKey}
+                  onFill={onSupportedSite ? handleFillKey : undefined}
                   recommended
                 />
               ))}
@@ -387,7 +462,23 @@ export default function Popup() {
 
         {filteredKeys.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            {searchQuery || selectedService !== 'All' ? (
+            {noKeysForSite ? (
+              <>
+                <Typography variant="body1" color="text.primary" sx={{ mb: 1, fontWeight: 500 }}>
+                  No {currentSiteService} keys in {profile?.name} profile yet
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Add a {currentSiteService} key to use one-click fill on this site.
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setShowAddDialog(true)}
+                >
+                  Add an {currentSiteService} key
+                </Button>
+              </>
+            ) : searchQuery || selectedService !== 'All' ? (
               <>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                   No keys match your search
@@ -433,6 +524,7 @@ export default function Popup() {
                 onCopy={handleCopyKey}
                 onEdit={handleEditKey}
                 onDelete={handleDeleteKey}
+                onFill={onSupportedSite ? handleFillKey : undefined}
               />
             ))}
           </List>
@@ -545,10 +637,11 @@ interface KeyListItemProps {
   onCopy: (keyId: string) => void;
   onEdit: (key: KeyDisplay) => void;
   onDelete: (key: KeyDisplay) => void;
+  onFill?: (keyId: string, keyName: string, service: ServiceType) => void;
   recommended?: boolean;
 }
 
-function KeyListItem({ keyItem, onCopy, onEdit, onDelete, recommended }: KeyListItemProps) {
+function KeyListItem({ keyItem, onCopy, onEdit, onDelete, onFill, recommended }: KeyListItemProps) {
   return (
     <ListItem
       disablePadding
@@ -594,6 +687,19 @@ function KeyListItem({ keyItem, onCopy, onEdit, onDelete, recommended }: KeyList
           sx={{ flexGrow: 1, minWidth: 0 }}
         />
       </ListItemButton>
+      {onFill && (
+        <Button
+          size="small"
+          variant="contained"
+          onClick={(e) => {
+            e.stopPropagation();
+            onFill(keyItem.id, keyItem.name, keyItem.service);
+          }}
+          sx={{ mr: 1 }}
+        >
+          Fill
+        </Button>
+      )}
       <Button
         size="small"
         onClick={(e) => {
