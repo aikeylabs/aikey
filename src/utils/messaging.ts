@@ -55,6 +55,9 @@ export const api = {
   decryptKey: (keyId: string) =>
     sendMessage(MessageType.DECRYPT_KEY, { keyId }),
 
+  updateKey: (key: any) =>
+    sendMessage(MessageType.UPDATE_KEY, { key }),
+
   deleteKey: (keyId: string) =>
     sendMessage(MessageType.DELETE_KEY, { keyId }),
 

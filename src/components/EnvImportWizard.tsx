@@ -170,7 +170,14 @@ export default function EnvImportWizard({ open, onClose, onImport }: EnvImportWi
   const selectedCount = importKeys.filter(k => k.selected).length;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      container={() => document.getElementById('modal-root') || document.body}
+      disablePortal={false}
+    >
       <DialogTitle>Import from .env File</DialogTitle>
 
       <DialogContent>

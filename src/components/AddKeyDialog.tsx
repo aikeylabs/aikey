@@ -71,7 +71,14 @@ export default function AddKeyDialog({ open, onClose, currentProfile }: AddKeyDi
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      container={() => document.getElementById('modal-root') || document.body}
+      disablePortal={false}
+    >
       <DialogTitle>Add API Key</DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 1 }}>

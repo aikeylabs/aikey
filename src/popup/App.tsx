@@ -27,6 +27,21 @@ const theme = createTheme({
   typography: {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   },
+  components: {
+    MuiModal: {
+      defaultProps: {
+        // Prevent aria-hidden on root element
+        disablePortal: false,
+        keepMounted: false,
+      },
+    },
+    MuiDialog: {
+      defaultProps: {
+        // Use a separate container for dialogs to avoid aria-hidden issues
+        disablePortal: false,
+      },
+    },
+  },
 });
 
 const root = document.getElementById('root');
@@ -34,6 +49,11 @@ const root = document.getElementById('root');
 if (!root) {
   throw new Error('Root element not found');
 }
+
+// Create a separate container for Material-UI modals
+const modalRoot = document.createElement('div');
+modalRoot.id = 'modal-root';
+document.body.appendChild(modalRoot);
 
 ReactDOM.createRoot(root).render(
   <ErrorBoundary>

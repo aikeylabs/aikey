@@ -6,6 +6,10 @@ import { profileService } from '@/services/profileService';
 import { MessageType, type Message, type MessageResponse } from '@/types/messages';
 import type { EncryptedKey, ServiceType, ProfileInput } from '@/types';
 
+// Track initialization state
+let isInitialized = false;
+let initializationPromise: Promise<void> | null = null;
+
 // Initialize services on startup
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('AiKey extension installed');
@@ -17,25 +21,49 @@ chrome.runtime.onStartup.addListener(async () => {
   await initializeExtension();
 });
 
+// Initialize immediately when background script loads
+initializeExtension().catch(console.error);
+
 async function initializeExtension() {
-  try {
-    await encryptionService.initialize();
-    await storageService.initialize();
-    await profileService.init();
-
-    // Initialize default profiles using profileService
-    await profileService.initializeDefaultProfiles();
-
-    // Get default profile
-    const defaultProfile = await profileService.getDefaultProfile();
-    if (defaultProfile) {
-      await storageService.setMetadata('currentProfile', defaultProfile.id);
-    }
-
-    console.log('AiKey initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize AiKey:', error);
+  // If already initialized, return immediately
+  if (isInitialized) {
+    console.log('Extension already initialized');
+    return;
   }
+
+  // If initialization is in progress, wait for it
+  if (initializationPromise) {
+    console.log('Waiting for initialization to complete...');
+    return initializationPromise;
+  }
+
+  // Start initialization
+  initializationPromise = (async () => {
+    try {
+      console.log('Initializing services...');
+      await encryptionService.initialize();
+      await storageService.initialize();
+      await profileService.init();
+
+      // Initialize default profiles using profileService
+      await profileService.initializeDefaultProfiles();
+
+      // Get default profile
+      const defaultProfile = await profileService.getDefaultProfile();
+      if (defaultProfile) {
+        await storageService.setMetadata('currentProfile', defaultProfile.id);
+      }
+
+      isInitialized = true;
+      console.log('AiKey initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize AiKey:', error);
+      initializationPromise = null; // Reset so it can be retried
+      throw error;
+    }
+  })();
+
+  return initializationPromise;
 }
 
 // Remove old createDefaultProfiles function as it's now handled by profileService
@@ -88,6 +116,11 @@ async function handleMessage(message: Message, sender: chrome.runtime.MessageSen
 
       case MessageType.DECRYPT_KEY:
         data = await handleDecryptKey(payload);
+        break;
+
+      case MessageType.UPDATE_KEY:
+        await storageService.updateKey(payload.key);
+        data = { updated: true };
         break;
 
       case MessageType.DELETE_KEY:

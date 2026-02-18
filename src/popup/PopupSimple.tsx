@@ -10,7 +10,6 @@ import {
   ListItem,
   ListItemText,
   ListItemButton,
-  Chip,
   TextField,
   InputAdornment,
   CircularProgress,
@@ -28,12 +27,17 @@ import type { KeyDisplay, Profile } from '@/types';
 import AddKeyDialog from '@/components/AddKeyDialog';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import EnvImportWizard from '@/components/EnvImportWizard';
+import { EditKeyDialog } from './components/EditKeyDialog';
+import { ProfileSelector } from '@/components/ProfileSelector';
+import { ProfileManager } from '@/components/ProfileManager';
 
 export default function Popup() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showImportWizard, setShowImportWizard] = useState(false);
+  const [showProfileManager, setShowProfileManager] = useState(false);
+  const [editingKey, setEditingKey] = useState<KeyDisplay | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -44,14 +48,28 @@ export default function Popup() {
   // Initialize and load data
   useEffect(() => {
     let mounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
 
     async function init() {
       try {
         console.log('Initializing extension...');
 
-        // Initialize extension
-        await api.initExtension();
-        console.log('Extension initialized');
+        // Initialize extension with retry logic
+        while (retryCount < maxRetries) {
+          try {
+            await api.initExtension();
+            console.log('Extension initialized');
+            break;
+          } catch (err: any) {
+            retryCount++;
+            if (retryCount >= maxRetries) {
+              throw err;
+            }
+            console.log(`Initialization attempt ${retryCount} failed, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
 
         if (!mounted) return;
 
@@ -130,12 +148,49 @@ export default function Popup() {
     },
   });
 
+  // Delete key mutation
+  const deleteKeyMutation = useMutation({
+    mutationFn: (keyId: string) => api.deleteKey(keyId),
+    onSuccess: () => {
+      // Reload keys after deletion
+      if (profile) {
+        api.getKeys(profile.id).then(setKeys).catch(console.error);
+      }
+    },
+  });
+
+  // Update key mutation
+  const updateKeyMutation = useMutation({
+    mutationFn: (key: any) => api.updateKey(key),
+    onSuccess: () => {
+      // Reload keys after update
+      if (profile) {
+        api.getKeys(profile.id).then(setKeys).catch(console.error);
+      }
+      setEditingKey(null);
+    },
+  });
+
   const handleFillKey = (keyId: string) => {
     fillKeyMutation.mutate(keyId);
   };
 
   const handleCopyKey = (keyId: string) => {
     copyKeyMutation.mutate(keyId);
+  };
+
+  const handleDeleteKey = (keyId: string) => {
+    if (confirm('Are you sure you want to delete this API key?')) {
+      deleteKeyMutation.mutate(keyId);
+    }
+  };
+
+  const handleEditKey = (key: KeyDisplay) => {
+    setEditingKey(key);
+  };
+
+  const handleSaveKey = (updatedKey: any) => {
+    updateKeyMutation.mutate(updatedKey);
   };
 
   const handleKeyAdded = () => {
@@ -170,6 +225,34 @@ export default function Popup() {
 
     // Reload keys
     handleKeyAdded();
+  };
+
+  const handleProfileChange = async (newProfile: Profile) => {
+    setProfile(newProfile);
+    setLoading(true);
+    try {
+      const profileKeys = await api.getKeys(newProfile.id);
+      setKeys(profileKeys || []);
+    } catch (err) {
+      console.error('Failed to load keys for profile:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProfileManagerClose = async () => {
+    setShowProfileManager(false);
+    // Reload current profile and keys
+    try {
+      const currentProfile = await api.getCurrentProfile();
+      setProfile(currentProfile);
+      if (currentProfile) {
+        const profileKeys = await api.getKeys(currentProfile.id);
+        setKeys(profileKeys || []);
+      }
+    } catch (err) {
+      console.error('Failed to reload after profile management:', err);
+    }
   };
 
   const filteredKeys = keys.filter(
@@ -226,27 +309,28 @@ export default function Popup() {
 
   return (
     <Box sx={{ width: 400, height: 600, display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="static" elevation={1}>
-        <Toolbar variant="dense">
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            AiKey
-          </Typography>
-          {profile && (
-            <Chip
-              label={profile.name}
-              size="small"
-              sx={{
-                bgcolor: profile.color || '#1E88E5',
-                color: 'white',
-                mr: 1,
-              }}
-            />
-          )}
-          <IconButton color="inherit" size="small">
-            <SettingsIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
+      {showProfileManager ? (
+        <ProfileManager onClose={handleProfileManagerClose} />
+      ) : (
+        <>
+          <AppBar position="static" elevation={1}>
+            <Toolbar variant="dense">
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                AiKey
+              </Typography>
+              {profile && (
+                <Box sx={{ mr: 1 }}>
+                  <ProfileSelector
+                    onProfileChange={handleProfileChange}
+                    onManageClick={() => setShowProfileManager(true)}
+                  />
+                </Box>
+              )}
+              <IconButton color="inherit" size="small">
+                <SettingsIcon />
+              </IconButton>
+            </Toolbar>
+          </AppBar>
 
       <Box sx={{ p: 2, flexGrow: 1, overflow: 'auto' }}>
         <TextField
@@ -277,6 +361,8 @@ export default function Popup() {
                   keyItem={key}
                   onFill={handleFillKey}
                   onCopy={handleCopyKey}
+                  onEdit={handleEditKey}
+                  onDelete={handleDeleteKey}
                   recommended
                 />
               ))}
@@ -298,6 +384,8 @@ export default function Popup() {
                 keyItem={key}
                 onFill={handleFillKey}
                 onCopy={handleCopyKey}
+                onEdit={handleEditKey}
+                onDelete={handleDeleteKey}
               />
             ))}
           </List>
@@ -338,6 +426,16 @@ export default function Popup() {
         onClose={() => setShowImportWizard(false)}
         onImport={handleImportKeys}
       />
+
+      {editingKey && (
+        <EditKeyDialog
+          keyData={editingKey}
+          onSave={handleSaveKey}
+          onClose={() => setEditingKey(null)}
+        />
+      )}
+        </>
+      )}
     </Box>
   );
 }
@@ -346,10 +444,12 @@ interface KeyListItemProps {
   keyItem: KeyDisplay;
   onFill: (keyId: string) => void;
   onCopy: (keyId: string) => void;
+  onEdit: (key: KeyDisplay) => void;
+  onDelete: (keyId: string) => void;
   recommended?: boolean;
 }
 
-function KeyListItem({ keyItem, onFill, onCopy, recommended }: KeyListItemProps) {
+function KeyListItem({ keyItem, onFill, onCopy, onEdit, onDelete, recommended }: KeyListItemProps) {
   return (
     <ListItem
       disablePadding
@@ -374,6 +474,12 @@ function KeyListItem({ keyItem, onFill, onCopy, recommended }: KeyListItemProps)
       </ListItemButton>
       <Button size="small" onClick={() => onCopy(keyItem.id)} sx={{ mr: 1 }}>
         Copy
+      </Button>
+      <Button size="small" onClick={() => onEdit(keyItem)} sx={{ mr: 1 }}>
+        Edit
+      </Button>
+      <Button size="small" color="error" onClick={() => onDelete(keyItem.id)} sx={{ mr: 1 }}>
+        Delete
       </Button>
     </ListItem>
   );
