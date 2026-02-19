@@ -71,6 +71,8 @@ export function resetServices(): void {
   isInitialized = false;
   initializationPromise = null;
   encryptionService.reset();
+  storageService.reset();
+  profileService.reset();
   console.log('Services reset');
 }
 
