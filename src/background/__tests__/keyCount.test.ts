@@ -59,25 +59,38 @@ if (!global.crypto.getRandomValues) {
   });
 }
 
-// Mock crypto.subtle with proper Web Crypto API implementation
-if (!global.crypto.subtle) {
-  const mockKey = { type: 'secret', algorithm: { name: 'AES-GCM' } };
-
-  global.crypto.subtle = {
-    importKey: vi.fn().mockResolvedValue(mockKey),
-    deriveKey: vi.fn().mockResolvedValue(mockKey),
-    encrypt: vi.fn().mockImplementation(async (algorithm, key, data) => {
-      // Return encrypted data with proper structure
-      const encrypted = new Uint8Array(data);
-      return encrypted.buffer;
-    }),
-    decrypt: vi.fn().mockImplementation(async (algorithm, key, data) => {
-      // Return decrypted data
-      const decrypted = new Uint8Array(data);
-      return decrypted.buffer;
-    }),
-  } as any;
+// Mock crypto.randomUUID
+if (!global.crypto.randomUUID) {
+  global.crypto.randomUUID = vi.fn(() => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  });
 }
+
+// Mock crypto.subtle with proper Web Crypto API implementation
+const mockKey = { type: 'secret', algorithm: { name: 'AES-GCM' } };
+
+global.crypto.subtle = {
+  importKey: vi.fn().mockImplementation(async (...args) => {
+    return mockKey;
+  }),
+  deriveKey: vi.fn().mockImplementation(async (...args) => {
+    return mockKey;
+  }),
+  encrypt: vi.fn().mockImplementation(async (algorithm, key, data) => {
+    // Return encrypted data with proper structure
+    const encrypted = new Uint8Array(data);
+    return encrypted.buffer;
+  }),
+  decrypt: vi.fn().mockImplementation(async (algorithm, key, data) => {
+    // Return decrypted data
+    const decrypted = new Uint8Array(data);
+    return decrypted.buffer;
+  }),
+} as any;
 
 describe('KeyCount Integration Tests', () => {
   let handleMessage: any;
@@ -112,7 +125,6 @@ describe('KeyCount Integration Tests', () => {
   });
 
   it('should update keyCount when adding a key', async () => {
-
     // Create a profile
     const createProfileResponse = await handleMessage({
       type: MessageType.CREATE_PROFILE,

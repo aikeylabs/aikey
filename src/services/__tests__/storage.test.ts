@@ -265,7 +265,7 @@ describe('StorageService', () => {
       await storageService.initialize();
 
       // Verify stores would be created (in real scenario)
-      expect(indexedDB.open).toHaveBeenCalledWith('aikey_vault', 1);
+      expect(indexedDB.open).toHaveBeenCalledWith('aikey_vault', 2);
     });
   });
 

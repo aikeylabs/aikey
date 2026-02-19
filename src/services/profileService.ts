@@ -425,6 +425,11 @@ class ProfileService {
       request.onerror = () => reject(request.error);
     });
   }
+
+  // Reset the service (for testing purposes)
+  reset(): void {
+    this.currentProfileId = null;
+  }
 }
 
 export const profileService = new ProfileService();

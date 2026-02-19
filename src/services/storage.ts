@@ -277,6 +277,11 @@ class StorageService {
       request.onerror = () => reject(request.error);
     });
   }
+
+  // Reset the service (for testing purposes)
+  reset(): void {
+    this.db = null;
+  }
 }
 
 export const storageService = new StorageService();
