@@ -2,6 +2,16 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { profileService } from '@/services/profileService';
 import type { Profile, ProfileInput } from '@/types';
 
+// Mock storage service
+vi.mock('@/services/storage', () => ({
+  storageService: {
+    getKeysByProfile: vi.fn().mockResolvedValue([]),
+    getAllBindings: vi.fn().mockResolvedValue([]),
+    deleteKey: vi.fn().mockResolvedValue(undefined),
+    deleteBinding: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 // Mock IndexedDB
 let mockProfiles: Map<string, Profile> = new Map();
 let mockSettings: Map<string, any> = new Map();

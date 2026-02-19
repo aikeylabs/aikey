@@ -6,12 +6,35 @@ class EncryptionService {
   private initialized = false;
 
   async initialize(): Promise<void> {
-    if (this.initialized) return;
+    if (this.initialized) {
+      console.log('Encryption service already initialized');
+      return;
+    }
 
-    const deviceId = await this.getDeviceIdentifier();
-    const salt = await this.getOrCreateSalt();
-    this.masterKey = await this.deriveKey(deviceId, salt);
-    this.initialized = true;
+    console.log('Starting encryption service initialization...');
+    try {
+      const deviceId = await this.getDeviceIdentifier();
+      console.log('Device ID obtained:', deviceId.substring(0, 20) + '...');
+
+      const salt = await this.getOrCreateSalt();
+      console.log('Salt obtained, length:', salt.length);
+
+      this.masterKey = await this.deriveKey(deviceId, salt);
+      console.log('Master key derived successfully');
+
+      this.initialized = true;
+      console.log('Encryption service initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize encryption service:', error);
+      throw error;
+    }
+  }
+
+  // Reset the service (for testing purposes)
+  reset(): void {
+    this.masterKey = null;
+    this.initialized = false;
+    console.log('Encryption service reset');
   }
 
   private async getDeviceIdentifier(): Promise<string> {

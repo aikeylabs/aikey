@@ -238,7 +238,7 @@ class ProfileService {
   }
 
   /**
-   * Delete a profile
+   * Delete a profile and cascade delete associated keys and bindings
    */
   async deleteProfile(id: string): Promise<void> {
     const profile = await this.getProfileById(id);
@@ -253,6 +253,25 @@ class ProfileService {
       throw new Error(reason || 'Cannot delete this profile');
     }
 
+    // Import storage service dynamically to avoid circular dependency
+    const { storageService } = await import('./storage');
+
+    // Cascade delete: Get all keys and bindings for this profile
+    const keys = await storageService.getKeysByProfile(id);
+    const allBindings = await storageService.getAllBindings();
+    const profileBindings = allBindings.filter(b => b.profileId === id);
+
+    // Delete all keys associated with this profile
+    for (const key of keys) {
+      await storageService.deleteKey(key.id);
+    }
+
+    // Delete all bindings associated with this profile
+    for (const binding of profileBindings) {
+      await storageService.deleteBinding(binding.id);
+    }
+
+    // Finally, delete the profile itself
     const db = await this.ensureDb();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(PROFILES_STORE, 'readwrite');

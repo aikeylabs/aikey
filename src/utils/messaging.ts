@@ -86,4 +86,15 @@ export const api = {
 
   // Init
   initExtension: () => sendMessage(MessageType.INIT_EXTENSION),
+
+  // Settings
+  getProfileSettings: () => sendMessage(MessageType.GET_SETTINGS),
+  updateProfileSettings: (settings: any) =>
+    sendMessage(MessageType.UPDATE_SETTINGS, settings),
+
+  // Domain profile preferences
+  setDomainProfilePreference: (domain: string, profileId: string) =>
+    sendMessage(MessageType.SET_DOMAIN_PROFILE_PREFERENCE, { domain, profileId }),
+  getDomainProfilePreference: (domain: string) =>
+    sendMessage(MessageType.GET_DOMAIN_PROFILE_PREFERENCE, { domain }),
 };

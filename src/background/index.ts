@@ -24,7 +24,7 @@ chrome.runtime.onStartup.addListener(async () => {
 // Initialize immediately when background script loads
 initializeExtension().catch(console.error);
 
-async function initializeExtension() {
+export async function initializeExtension() {
   // If already initialized, return immediately
   if (isInitialized) {
     console.log('Extension already initialized');
@@ -66,6 +66,14 @@ async function initializeExtension() {
   return initializationPromise;
 }
 
+// Reset services (for testing purposes)
+export function resetServices(): void {
+  isInitialized = false;
+  initializationPromise = null;
+  encryptionService.reset();
+  console.log('Services reset');
+}
+
 // Remove old createDefaultProfiles function as it's now handled by profileService
 
 // Message handler
@@ -90,10 +98,16 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
-async function handleMessage(message: Message, sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
+export async function handleMessage(message: Message, sender?: chrome.runtime.MessageSender): Promise<MessageResponse> {
   const { type, payload, requestId } = message;
 
   try {
+    // Ensure services are initialized before handling any message
+    // (except INIT_EXTENSION which explicitly initializes)
+    if (type !== MessageType.INIT_EXTENSION && !isInitialized) {
+      await initializeExtension();
+    }
+
     let data: any;
 
     switch (type) {
@@ -124,7 +138,16 @@ async function handleMessage(message: Message, sender: chrome.runtime.MessageSen
         break;
 
       case MessageType.DELETE_KEY:
+        // Get the key's profileId before deleting
+        const keyToDelete = await storageService.getKey(payload.keyId);
         await storageService.deleteKey(payload.keyId);
+
+        // Update profile keyCount if key existed
+        if (keyToDelete) {
+          const keys = await storageService.getKeysByProfile(keyToDelete.profileId);
+          await profileService.updateProfileMetadata(keyToDelete.profileId, { keyCount: keys.length });
+        }
+
         data = { deleted: true };
         break;
 
@@ -183,6 +206,15 @@ async function handleMessage(message: Message, sender: chrome.runtime.MessageSen
         data = { created: true };
         break;
 
+      case MessageType.DELETE_BINDING:
+        await storageService.deleteBinding(payload.id);
+        data = { deleted: true };
+        break;
+
+      case MessageType.GET_BINDINGS:
+        data = await storageService.getBindings(payload.domain);
+        break;
+
       case MessageType.GET_SITE_RECOMMENDATIONS:
         data = await handleGetSiteRecommendations(payload);
         break;
@@ -193,6 +225,9 @@ async function handleMessage(message: Message, sender: chrome.runtime.MessageSen
         break;
 
       case MessageType.FILL_KEY:
+        if (!sender) {
+          throw new Error('Sender information required for FILL_KEY');
+        }
         data = await handleFillKey(payload, sender);
         break;
 
@@ -222,6 +257,11 @@ async function handleAddKey(payload: {
   profileId?: string;
 }) {
   const { service, apiKey, name, tag, profileId } = payload;
+
+  // Ensure encryption service is initialized
+  if (!isInitialized) {
+    await initializeExtension();
+  }
 
   // Get current profile if not specified
   let targetProfileId: string = profileId || '';
@@ -253,6 +293,10 @@ async function handleAddKey(payload: {
   };
 
   await storageService.addKey(encryptedKey);
+
+  // Update profile keyCount
+  const keys = await storageService.getKeysByProfile(targetProfileId);
+  await profileService.updateProfileMetadata(targetProfileId, { keyCount: keys.length });
 
   return { keyId: encryptedKey.id };
 }

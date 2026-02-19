@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import 'fake-indexeddb/auto';
 
 // Mock Web Crypto API
 Object.defineProperty(globalThis, 'crypto', {
@@ -19,20 +20,5 @@ Object.defineProperty(globalThis, 'crypto', {
       deriveKey: vi.fn(),
     },
   },
-  writable: true,
-});
-
-// Mock IndexedDB
-class IDBKeyRange {
-  static upperBound(value: any) {
-    return { upper: value };
-  }
-  static lowerBound(value: any) {
-    return { lower: value };
-  }
-}
-
-Object.defineProperty(globalThis, 'IDBKeyRange', {
-  value: IDBKeyRange,
   writable: true,
 });

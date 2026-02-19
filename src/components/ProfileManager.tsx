@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Profile, ProfileInput } from '@/types';
+import { Profile, ProfileInput, ProfileSettings } from '@/types';
 import { MessageType } from '@/types/messages';
 import { sendMessage } from '@/utils/messaging';
 import {
@@ -8,6 +8,7 @@ import {
   canDeleteProfile,
   canRenameProfile,
 } from '@/utils/profileUtils';
+import { ProfileTipsDialog } from './ProfileTipsDialog';
 
 interface ProfileManagerProps {
   onClose?: () => void;
@@ -20,6 +21,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({ onClose }) => {
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showTipsDialog, setShowTipsDialog] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<ProfileInput>({
@@ -55,10 +57,19 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({ onClose }) => {
   const handleCreateProfile = async () => {
     try {
       setError(null);
+      const hadTwoProfiles = profiles.length === 2;
       await sendMessage(MessageType.CREATE_PROFILE, formData);
       await loadProfiles();
       setIsCreating(false);
       resetForm();
+
+      // Show tips dialog if this is the third profile and user hasn't dismissed it
+      if (hadTwoProfiles) {
+        const settings = await sendMessage<ProfileSettings>(MessageType.GET_SETTINGS);
+        if (settings.showProfileTips) {
+          setShowTipsDialog(true);
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to create profile');
     }
@@ -158,6 +169,16 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({ onClose }) => {
       icon: PROFILE_ICONS[0],
       description: '',
     });
+  };
+
+  const handleDismissTips = async () => {
+    try {
+      await sendMessage(MessageType.UPDATE_SETTINGS, {
+        profileTipsDismissed: true,
+      });
+    } catch (err) {
+      console.error('Failed to dismiss tips:', err);
+    }
   };
 
   if (loading) {
@@ -344,6 +365,13 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({ onClose }) => {
           </div>
         </div>
       )}
+
+      {/* Profile Tips Dialog */}
+      <ProfileTipsDialog
+        open={showTipsDialog}
+        onClose={() => setShowTipsDialog(false)}
+        onDismiss={handleDismissTips}
+      />
     </div>
   );
 };

@@ -360,3 +360,151 @@
     grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
   }
 }
+
+/* Profile Tips Dialog */
+
+.profile-tips-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.profile-tips-dialog {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.profile-tips-header {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.profile-tips-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.profile-tips-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.profile-tips-content {
+  padding: 24px;
+}
+
+.tip-section {
+  margin-bottom: 24px;
+}
+
+.tip-section:last-child {
+  margin-bottom: 0;
+}
+
+.tip-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tip-section h3 span {
+  font-size: 20px;
+}
+
+.tip-section p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.tip-section ul {
+  margin: 8px 0 0 0;
+  padding-left: 24px;
+}
+
+.tip-section li {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.tip-section li:last-child {
+  margin-bottom: 0;
+}
+
+.profile-tips-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.dismiss-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dismiss-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.profile-tips-footer .btn-primary {
+  min-width: 100px;
+}
+
+@media (max-width: 600px) {
+  .profile-tips-dialog {
+    max-height: 90vh;
+  }
+
+  .profile-tips-header,
+  .profile-tips-content,
+  .profile-tips-footer {
+    padding: 16px;
+  }
+
+  .profile-tips-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dismiss-checkbox {
+    order: 2;
+  }
+
+  .profile-tips-footer .btn-primary {
+    order: 1;
+    width: 100%;
+  }
+}

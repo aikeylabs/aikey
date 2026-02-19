@@ -111,12 +111,22 @@ export function getRandomIcon(): string {
 /**
  * Check if a profile can be deleted
  */
-export function canDeleteProfile(profile: { isBuiltIn: boolean; id: string }, totalProfiles: number): { canDelete: boolean; reason?: string } {
+export function canDeleteProfile(
+  profile: { isBuiltIn: boolean; id: string; metadata?: { keyCount?: number } },
+  totalProfiles: number
+): { canDelete: boolean; reason?: string } {
   if (profile.isBuiltIn) {
     return { canDelete: false, reason: 'Cannot delete built-in profiles' };
   }
   if (totalProfiles <= 1) {
     return { canDelete: false, reason: 'Cannot delete the last profile' };
+  }
+  const keyCount = profile.metadata?.keyCount || 0;
+  if (keyCount > 0) {
+    return {
+      canDelete: false,
+      reason: 'This profile still has keys. Move or delete its keys before removing the profile.'
+    };
   }
   return { canDelete: true };
 }
