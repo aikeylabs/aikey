@@ -3,7 +3,7 @@
 import type { EncryptedKey, Profile, SiteBinding, UsageLog } from '@/types';
 
 const DB_NAME = 'aikey_vault';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 class StorageService {
   private db: IDBDatabase | null = null;
@@ -20,6 +20,7 @@ class StorageService {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const oldVersion = event.oldVersion;
 
         // Keys store
         if (!db.objectStoreNames.contains('keys')) {
@@ -33,6 +34,14 @@ class StorageService {
         if (!db.objectStoreNames.contains('profiles')) {
           const profileStore = db.createObjectStore('profiles', { keyPath: 'id' });
           profileStore.createIndex('name', 'name', { unique: false });
+          profileStore.createIndex('isDefault', 'isDefault', { unique: false });
+        } else if (oldVersion < 2) {
+          // Add isDefault index for existing profiles store
+          const transaction = (event.target as IDBOpenDBRequest).transaction!;
+          const profileStore = transaction.objectStore('profiles');
+          if (!profileStore.indexNames.contains('isDefault')) {
+            profileStore.createIndex('isDefault', 'isDefault', { unique: false });
+          }
         }
 
         // Bindings store
@@ -48,6 +57,14 @@ class StorageService {
           const logStore = db.createObjectStore('usageLogs', { keyPath: 'id' });
           logStore.createIndex('keyId', 'keyId', { unique: false });
           logStore.createIndex('timestamp', 'timestamp', { unique: false });
+          logStore.createIndex('profileId', 'profileId', { unique: false });
+        } else if (oldVersion < 2) {
+          // Add profileId index for existing usageLogs store
+          const transaction = (event.target as IDBOpenDBRequest).transaction!;
+          const logStore = transaction.objectStore('usageLogs');
+          if (!logStore.indexNames.contains('profileId')) {
+            logStore.createIndex('profileId', 'profileId', { unique: false });
+          }
         }
 
         // Metadata store
@@ -145,6 +162,14 @@ class StorageService {
       return store.getAll();
     }).then((bindings) =>
       bindings.filter((b) => b.domain === domain && b.profileId === profileId)
+    );
+  }
+
+  async getBindings(domain: string): Promise<SiteBinding[]> {
+    return this.performRequest('bindings', 'readonly', (store) => {
+      return store.getAll();
+    }).then((bindings) =>
+      bindings.filter((b) => b.domain === domain)
     );
   }
 
