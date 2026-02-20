@@ -428,7 +428,7 @@ class ProfileService {
 
   // Reset the service (for testing purposes)
   reset(): void {
-    this.currentProfileId = null;
+    this.db = null;
   }
 }
 
