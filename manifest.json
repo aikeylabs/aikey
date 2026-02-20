@@ -6,8 +6,7 @@
   "description": "Store AI API keys once. Fill them anywhere in one click.",
   "permissions": [
     "storage",
-    "activeTab",
-    "scripting"
+    "activeTab"
   ],
   "host_permissions": [
     "https://platform.openai.com/*",
