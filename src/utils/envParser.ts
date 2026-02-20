@@ -83,7 +83,7 @@ export function detectServiceFromKey(key: string): string | null {
 
   if (keyUpper.includes('OPENAI')) return 'OpenAI';
   if (keyUpper.includes('ANTHROPIC') || keyUpper.includes('CLAUDE')) return 'Anthropic';
-  if (keyUpper.includes('AZURE')) return 'Azure';
+  if (keyUpper.includes('AZURE')) return 'Azure OpenAI';
   if (keyUpper.includes('GOOGLE') || keyUpper.includes('GEMINI')) return 'Google';
   if (keyUpper.includes('COHERE')) return 'Cohere';
   if (keyUpper.includes('HUGGING') || keyUpper.includes('HF_')) return 'Hugging Face';
@@ -105,9 +105,9 @@ export function detectServiceFromValue(value: string): string | null {
     return 'Anthropic';
   }
 
-  // Azure: typically 32 hex characters
+  // Azure OpenAI: typically 32 hex characters
   if (/^[a-f0-9]{32}$/i.test(value)) {
-    return 'Azure';
+    return 'Azure OpenAI';
   }
 
   // Google: AIza...

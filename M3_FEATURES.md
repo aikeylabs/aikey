@@ -11,7 +11,7 @@ M3 introduces a modern, card-based UI for the key list with improved visual hier
 - Compact layout with better information hierarchy
 
 ### 2. Service Logos
-- Visual icons for each service type (OpenAI 🤖, Anthropic 🧠, Azure ☁️, Groq ⚡, Custom 🔧)
+- Visual icons for each service type (OpenAI 🤖, Anthropic 🧠, Azure OpenAI ☁️, Groq ⚡, Custom 🔧)
 - Displayed in circular avatars for better recognition
 
 ### 3. Relative Time Display

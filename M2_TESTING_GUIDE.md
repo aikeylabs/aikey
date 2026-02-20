@@ -55,7 +55,7 @@ HF_TOKEN=hf_test123456789abcdefghijklmnopqrstuvwxyz
    - Should detect 6 API keys
    - OpenAI key → Service: OpenAI
    - Anthropic key → Service: Anthropic
-   - Azure key → Service: Azure
+   - Azure key → Service: Azure OpenAI
    - Google key → Service: Google
    - Cohere key → Service: Cohere
    - HF token → Service: Hugging Face
