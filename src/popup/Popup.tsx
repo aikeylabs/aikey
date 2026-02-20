@@ -287,7 +287,7 @@ export default function Popup() {
         {recommendations.length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-              Recommended for this site – Profile: {profile?.name || 'Personal'}
+              Recommended for this site • Current profile: {profile?.name || 'Personal'}
             </Typography>
             <List dense>
               {recommendations.map((key: KeyDisplay) => (

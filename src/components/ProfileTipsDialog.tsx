@@ -46,12 +46,12 @@ export const ProfileTipsDialog: React.FC<ProfileTipsDialogProps> = ({
         </Typography>
         <Typography variant="body2" color="text.secondary" paragraph>
           Use profiles to separate personal, work, client, and dev/prod environments.
-          Each profile keeps its own set of API keys, making it easy to switch contexts
+          Each profile has its own set of API keys, making it easy to switch contexts
           without mixing credentials.
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Enable "Remember my profile per domain" in settings to automatically switch
-          to the right profile for each website.
+          to the correct profile for each website.
         </Typography>
       </DialogContent>
       <DialogActions>

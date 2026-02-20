@@ -139,7 +139,7 @@ interface EncryptedKey {
 **Action**:
 - [ ] Verify empty state shows when no keys in current profile
 - [ ] Verify "Add my first key" CTA button
-- [ ] Verify message: "No keys yet. Add your OpenAI / Anthropic / Azure keys..."
+- [ ] Verify message: "No keys yet. Add your OpenAI / Anthropic / Azure OpenAI / other API keys..."
 
 ---
 

@@ -34,7 +34,7 @@ export default function WelcomeScreen({ onAddKey, onExplore }: WelcomeScreenProp
             <CheckIcon color="primary" />
           </ListItemIcon>
           <ListItemText
-            primary="Using OpenAI, Anthropic, Azure or others?"
+            primary="Using OpenAI, Anthropic, Azure OpenAI, or others?"
             primaryTypographyProps={{ variant: 'body2' }}
           />
         </ListItem>

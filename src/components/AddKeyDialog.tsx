@@ -165,11 +165,11 @@ export default function AddKeyDialog({ open, onClose, currentProfile }: AddKeyDi
           />
 
           <Typography variant="caption" color="text.secondary">
-            Profile: {currentProfile?.name || 'Personal'}
+            Current profile: {currentProfile?.name || 'Personal'}
           </Typography>
 
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-            Is this a personal key or a work key?
+            This key will be added to your {currentProfile?.name || 'Personal'} profile.
           </Typography>
 
           <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>

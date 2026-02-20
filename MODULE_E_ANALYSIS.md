@@ -110,7 +110,7 @@ onExplore={() => setShowWelcome(false)}
 3. Main UI renders with empty state
 4. Empty state shows (lines 480-495):
    - "No keys yet"
-   - "Add your OpenAI, Anthropic, or Azure keys to see everything in one place."
+   - "Add your OpenAI, Anthropic, Azure OpenAI, or other API keys to see everything in one place."
    - Button: "Add my first key"
 5. User can click button to add key ✅
 

@@ -499,7 +499,7 @@ export default function Popup() {
                   No keys yet
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Add your OpenAI, Anthropic, or Azure keys to see everything in one place.
+                  Add your OpenAI, Anthropic, Azure OpenAI, or other API keys to see everything in one place.
                 </Typography>
                 <Button
                   variant="contained"

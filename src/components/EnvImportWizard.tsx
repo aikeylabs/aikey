@@ -287,10 +287,9 @@ export default function EnvImportWizard({ open, onClose, onImport }: EnvImportWi
                         >
                           <MenuItem value="OpenAI">OpenAI</MenuItem>
                           <MenuItem value="Anthropic">Anthropic</MenuItem>
-                          <MenuItem value="Azure">Azure OpenAI</MenuItem>
-                          <MenuItem value="Google">Google AI</MenuItem>
-                          <MenuItem value="Cohere">Cohere</MenuItem>
-                          <MenuItem value="Hugging Face">Hugging Face</MenuItem>
+                          <MenuItem value="Azure OpenAI">Azure OpenAI</MenuItem>
+                          <MenuItem value="Groq">Groq</MenuItem>
+                          <MenuItem value="Custom">Custom</MenuItem>
                         </Select>
                       </FormControl>
 
